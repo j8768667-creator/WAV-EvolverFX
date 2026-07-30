@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scherer - Granular & Musical WAV Studio</title>
+  <title>Scherer - Granular Studio & Exporter</title>
   <style>
     :root {
       --bg-color: #0f172a;
       --card-bg: #1e293b;
       --accent: #38bdf8;
       --accent-hover: #0284c7;
+      --accent-export: #10b981;
+      --accent-export-hover: #059669;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
@@ -26,7 +28,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -61,9 +63,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1rem;
+      gap: 0.5rem;
       border: 2px dashed var(--border);
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 8px;
       cursor: pointer;
       transition: border-color 0.2s;
@@ -75,6 +77,15 @@
 
     input[type="file"] {
       display: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 120px;
+      background-color: #0b1120;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
     }
 
     .btn {
@@ -92,6 +103,15 @@
       background-color: var(--accent-hover);
     }
 
+    .btn-export {
+      background-color: var(--accent-export);
+      color: #000;
+    }
+
+    .btn-export:hover {
+      background-color: var(--accent-export-hover);
+    }
+
     .btn:disabled {
       background-color: var(--border);
       color: var(--text-muted);
@@ -100,7 +120,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5rem;
     }
 
@@ -111,7 +131,7 @@
     }
 
     label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
@@ -131,12 +151,14 @@
       gap: 1rem;
       justify-content: center;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
     .status {
       text-align: center;
       font-style: italic;
       color: var(--text-muted);
+      margin-top: 1rem;
     }
   </style>
 </head>
@@ -145,7 +167,7 @@
 <div class="container">
   <header>
     <h1>Scherer WAV Studio</h1>
-    <p>Ambient Granular Time-Stretcher & Musical Sample Manipulator</p>
+    <p>Granular Time-Stretcher & Ambient Sound Design Engine</p>
   </header>
 
   <div class="card">
@@ -153,34 +175,44 @@
       <span id="fileLabel">Click or Drag & Drop a WAV file here</span>
       <input type="file" id="audioFile" accept="audio/wav, audio/x-wav">
     </label>
+    <canvas id="waveformCanvas"></canvas>
   </div>
 
   <div class="card grid">
     <div class="control-group">
-      <h3>Global Controls</h3>
+      <h3>Global & Effects</h3>
       <label>Master Volume <span id="volVal" class="value-display">80%</span></label>
       <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
 
-      <label>Global Pitch / Rate <span id="pitchVal" class="value-display">1.0x</span></label>
+      <label>Global Pitch <span id="pitchVal" class="value-display">1.0x</span></label>
       <input type="range" id="pitch" min="0.25" max="2.0" step="0.01" value="1.0">
+
+      <label>Ambient Reverb Wet <span id="reverbVal" class="value-display">30%</span></label>
+      <input type="range" id="reverb" min="0" max="0.8" step="0.01" value="0.3">
     </div>
 
     <div class="control-group">
       <h3>Scherer Engine (Granular)</h3>
       <label>Engine Mode</label>
       <select id="engineMode" style="padding: 0.5rem; border-radius: 4px; background: var(--bg-color); color: var(--text); border: 1px solid var(--border);">
-        <option value="standard">Standard Playback</option>
         <option value="granular" selected>Granular Stretch</option>
+        <option value="standard">Standard Playback</option>
       </select>
 
       <label>Grain Size <span id="grainVal" class="value-display">30ms</span></label>
       <input type="range" id="grainSize" min="0.01" max="0.1" step="0.005" value="0.03">
 
-      <label>Spray / Randomness <span id="sprayVal" class="value-display">10ms</span></label>
+      <label>Position Spray <span id="sprayVal" class="value-display">10ms</span></label>
       <input type="range" id="spray" min="0" max="0.1" step="0.005" value="0.01">
 
       <label>Stretch Factor <span id="stretchVal" class="value-display">4.0x</span></label>
       <input type="range" id="stretch" min="0.5" max="10.0" step="0.1" value="4.0">
+
+      <label>Stereo Spread <span id="spreadVal" class="value-display">50%</span></label>
+      <input type="range" id="spread" min="0" max="1" step="0.05" value="0.5">
+
+      <label>Pitch Jitter <span id="jitterVal" class="value-display">0.02</span></label>
+      <input type="range" id="jitter" min="0" max="0.1" step="0.005" value="0.02">
     </div>
   </div>
 
@@ -188,132 +220,175 @@
     <div class="transport-controls">
       <button class="btn" id="playBtn" disabled>Play</button>
       <button class="btn" id="stopBtn" disabled>Stop</button>
+      <button class="btn btn-export" id="exportBtn" disabled>Export 15s Ambient WAV</button>
     </div>
     <p id="status" class="status">Please load a WAV file to start.</p>
   </div>
 </div>
 
 <script>
-  let audioCtx;
-  let audioBuffer = null;
-  let standardSource = null;
-  let isPlaying = false;
-  let gainNode;
-
-  // Granular engine state
-  let grainTimer = null;
-  let currentPosition = 0;
+  let audioCtx, audioBuffer = null, standardSource = null, isPlaying = false, gainNode, delayNode, feedbackGain;
+  let grainTimer = null, currentPosition = 0;
 
   // UI Elements
   const fileInput = document.getElementById('audioFile');
   const fileLabel = document.getElementById('fileLabel');
   const playBtn = document.getElementById('playBtn');
   const stopBtn = document.getElementById('stopBtn');
+  const exportBtn = document.getElementById('exportBtn');
   const status = document.getElementById('status');
+  const canvas = document.getElementById('waveformCanvas');
+  const canvasCtx = canvas.getContext('2d');
 
+  // Sliders
   const volumeSlider = document.getElementById('volume');
   const pitchSlider = document.getElementById('pitch');
+  const reverbSlider = document.getElementById('reverb');
   const grainSizeSlider = document.getElementById('grainSize');
   const spraySlider = document.getElementById('spray');
   const stretchSlider = document.getElementById('stretch');
+  const spreadSlider = document.getElementById('spread');
+  const jitterSlider = document.getElementById('jitter');
   const engineModeSelect = document.getElementById('engineMode');
 
-  // Value Displays
+  // Displays
   const volVal = document.getElementById('volVal');
   const pitchVal = document.getElementById('pitchVal');
+  const reverbVal = document.getElementById('reverbVal');
   const grainVal = document.getElementById('grainVal');
   const sprayVal = document.getElementById('sprayVal');
   const stretchVal = document.getElementById('stretchVal');
+  const spreadVal = document.getElementById('spreadVal');
+  const jitterVal = document.getElementById('jitterVal');
 
-  // Initialize Web Audio Context
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       gainNode = audioCtx.createGain();
       gainNode.gain.value = parseFloat(volumeSlider.value);
+
+      // Simple Ambient Reverb Tail via Feedback Delay
+      delayNode = audioCtx.createDelay();
+      delayNode.delayTime.value = 0.25; 
+      feedbackGain = audioCtx.createGain();
+      feedbackGain.gain.value = parseFloat(reverbSlider.value);
+
+      gainNode.connect(delayNode);
+      delayNode.connect(feedbackGain);
+      feedbackGain.connect(delayNode);
+
       gainNode.connect(audioCtx.destination);
+      delayNode.connect(audioCtx.destination);
     }
   }
 
-  // File Upload Handler
+  // Draw Audio Waveform
+  function drawWaveform() {
+    if (!audioBuffer) return;
+    const width = canvas.width = canvas.clientWidth * window.devicePixelRatio;
+    const height = canvas.height = canvas.clientHeight * window.devicePixelRatio;
+
+    const data = audioBuffer.getChannelData(0);
+    const step = Math.ceil(data.length / width);
+    const amp = height / 2;
+
+    canvasCtx.fillStyle = '#0b1120';
+    canvasCtx.fillRect(0, 0, width, height);
+
+    canvasCtx.beginPath();
+    canvasCtx.strokeStyle = '#38bdf8';
+    canvasCtx.lineWidth = 1;
+
+    for (let i = 0; i < width; i++) {
+      let min = 1.0, max = -1.0;
+      for (let j = 0; j < step; j++) {
+        const datum = data[(i * step) + j];
+        if (datum < min) min = datum;
+        if (datum > max) max = datum;
+      }
+      canvasCtx.moveTo(i, (1 + min) * amp);
+      canvasCtx.lineTo(i, (1 + max) * amp);
+    }
+    canvasCtx.stroke();
+  }
+
+  // Visual Playhead Animation
+  function updatePlayhead() {
+    if (!isPlaying || !audioBuffer) return;
+    drawWaveform();
+    const width = canvas.width;
+    const height = canvas.height;
+    const x = (currentPosition / audioBuffer.duration) * width;
+
+    // Draw active playhead line
+    canvasCtx.strokeStyle = '#ef4444';
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(x, 0);
+    canvasCtx.lineTo(x, height);
+    canvasCtx.stroke();
+
+    requestAnimationFrame(updatePlayhead);
+  }
+
   fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     initAudio();
     fileLabel.textContent = file.name;
-    status.textContent = "Loading audio buffer...";
+    status.textContent = "Decoding audio...";
 
     const arrayBuffer = await file.arrayBuffer();
     try {
       audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      status.textContent = `Loaded: ${file.name} (${audioBuffer.duration.toFixed(2)}s)`;
+      status.textContent = `Loaded: ${file.name} | Length: ${audioBuffer.duration.toFixed(2)}s | ${audioBuffer.sampleRate}Hz`;
       playBtn.disabled = false;
       stopBtn.disabled = false;
+      exportBtn.disabled = false;
+      drawWaveform();
     } catch (err) {
       status.textContent = "Error decoding WAV file.";
-      console.error(err);
     }
   });
 
-  // UI Value Updates
-  volumeSlider.addEventListener('input', (e) => {
-    volVal.textContent = `${Math.round(e.target.value * 100)}%`;
-    if (gainNode) gainNode.gain.value = e.target.value;
-  });
+  // UI Event Listeners
+  volumeSlider.oninput = (e) => { volVal.textContent = `${Math.round(e.target.value * 100)}%`; if (gainNode) gainNode.gain.value = e.target.value; };
+  pitchSlider.oninput = (e) => { pitchVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`; };
+  reverbSlider.oninput = (e) => { reverbVal.textContent = `${Math.round(e.target.value * 100)}%`; if (feedbackGain) feedbackGain.gain.value = e.target.value; };
+  grainSizeSlider.oninput = (e) => grainVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
+  spraySlider.oninput = (e) => sprayVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
+  stretchSlider.oninput = (e) => stretchVal.textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
+  spreadSlider.oninput = (e) => spreadVal.textContent = `${Math.round(e.target.value * 100)}%`;
+  jitterSlider.oninput = (e) => jitterVal.textContent = parseFloat(e.target.value).toFixed(3);
 
-  pitchSlider.addEventListener('input', (e) => {
-    pitchVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`;
-    if (standardSource) standardSource.playbackRate.value = e.target.value;
-  });
-
-  grainSizeSlider.addEventListener('input', (e) => {
-    grainVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
-  });
-
-  spraySlider.addEventListener('input', (e) => {
-    sprayVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
-  });
-
-  stretchSlider.addEventListener('input', (e) => {
-    stretchVal.textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
-  });
-
-  // Play / Stop Handlers
-  playBtn.addEventListener('click', () => {
+  playBtn.onclick = () => {
     if (!audioBuffer) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    stopAudio(); // Stop any currently running audio
+    stopAudio();
     isPlaying = true;
 
-    const mode = engineModeSelect.value;
-    if (mode === 'standard') {
+    if (engineModeSelect.value === 'standard') {
       playStandard();
     } else {
       playGranular();
+      requestAnimationFrame(updatePlayhead);
     }
-    status.textContent = `Playing in ${mode.toUpperCase()} mode...`;
-  });
+    status.textContent = "Playing...";
+  };
 
-  stopBtn.addEventListener('click', () => {
+  stopBtn.onclick = () => {
     stopAudio();
     status.textContent = "Stopped.";
-  });
+    drawWaveform();
+  };
 
   function stopAudio() {
     isPlaying = false;
-    if (standardSource) {
-      standardSource.stop();
-      standardSource = null;
-    }
-    if (grainTimer) {
-      clearTimeout(grainTimer);
-      grainTimer = null;
-    }
+    if (standardSource) { standardSource.stop(); standardSource = null; }
+    if (grainTimer) { clearTimeout(grainTimer); grainTimer = null; }
   }
 
-  // 1. Standard Playback Engine
   function playStandard() {
     standardSource = audioCtx.createBufferSource();
     standardSource.buffer = audioBuffer;
@@ -323,55 +398,165 @@
     standardSource.start(0);
   }
 
-  // 2. Scherer Granular Engine
   function playGranular() {
     const grainDuration = parseFloat(grainSizeSlider.value);
     const spray = parseFloat(spraySlider.value);
     const stretch = parseFloat(stretchSlider.value);
-    const pitch = parseFloat(pitchSlider.value);
+    const basePitch = parseFloat(pitchSlider.value);
+    const jitter = parseFloat(jitterSlider.value);
+    const spread = parseFloat(spreadSlider.value);
 
-    // Calculate position offset with random spray
     const randomOffset = (Math.random() - 0.5) * spray;
     let readPos = currentPosition + randomOffset;
 
-    // Wrap around position bounds
     if (readPos < 0) readPos = 0;
     if (readPos >= audioBuffer.duration - grainDuration) {
       readPos = 0;
       currentPosition = 0;
     }
 
-    // Spawn a single grain
-    spawnGrain(readPos, grainDuration, pitch);
+    const pitch = basePitch + (Math.random() - 0.5) * jitter;
+    const pan = (Math.random() - 0.5) * 2 * spread;
 
-    // Advance position based on stretch factor
+    spawnGrain(readPos, grainDuration, pitch, pan, audioCtx, gainNode);
+
     const hopSize = grainDuration / stretch;
     currentPosition += hopSize / 2;
 
-    // Schedule next grain spawn
     if (isPlaying) {
       grainTimer = setTimeout(playGranular, (hopSize / 2) * 1000);
     }
   }
 
-  function spawnGrain(offset, duration, pitchRate) {
-    const source = audioCtx.createBufferSource();
+  function spawnGrain(offset, duration, pitchRate, panVal, ctx, destination) {
+    const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
     source.playbackRate.value = pitchRate;
 
-    // Apply Hanning Window Enveloping to eliminate clicks
-    const env = audioCtx.createGain();
-    const now = audioCtx.currentTime;
+    const env = ctx.createGain();
+    const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const now = ctx.currentTime;
 
     env.gain.setValueAtTime(0, now);
     env.gain.linearRampToValueAtTime(1, now + duration / 2);
     env.gain.linearRampToValueAtTime(0, now + duration);
 
     source.connect(env);
-    env.connect(gainNode);
+    if (panner) {
+      panner.pan.value = panVal;
+      env.connect(panner);
+      panner.connect(destination);
+    } else {
+      env.connect(destination);
+    }
 
     source.start(now, offset, duration);
     source.stop(now + duration);
+  }
+
+  // --- WAV EXPORTER (Offline Audio Context) ---
+  exportBtn.onclick = async () => {
+    if (!audioBuffer) return;
+    status.textContent = "Rendering 15-second WAV export...";
+
+    const exportDuration = 15; // Render 15 seconds of drone
+    const offlineCtx = new OfflineAudioContext(2, 44100 * exportDuration, 44100);
+    const renderGain = offlineCtx.createGain();
+    renderGain.gain.value = parseFloat(volumeSlider.value);
+    renderGain.connect(offlineCtx.destination);
+
+    let renderPos = 0;
+    const grainDuration = parseFloat(grainSizeSlider.value);
+    const spray = parseFloat(spraySlider.value);
+    const stretch = parseFloat(stretchSlider.value);
+    const basePitch = parseFloat(pitchSlider.value);
+    const jitter = parseFloat(jitterSlider.value);
+    const spread = parseFloat(spreadSlider.value);
+    const hopSize = grainDuration / stretch;
+
+    for (let time = 0; time < exportDuration; time += hopSize / 2) {
+      const randomOffset = (Math.random() - 0.5) * spray;
+      let readPos = renderPos + randomOffset;
+      if (readPos < 0) readPos = 0;
+      if (readPos >= audioBuffer.duration - grainDuration) { readPos = 0; renderPos = 0; }
+
+      const pitch = basePitch + (Math.random() - 0.5) * jitter;
+      const pan = (Math.random() - 0.5) * 2 * spread;
+
+      // Schedule grain inside offline context
+      const source = offlineCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.playbackRate.value = pitch;
+
+      const env = offlineCtx.createGain();
+      const panner = offlineCtx.createStereoPanner();
+
+      env.gain.setValueAtTime(0, time);
+      env.gain.linearRampToValueAtTime(1, time + grainDuration / 2);
+      env.gain.linearRampToValueAtTime(0, time + grainDuration);
+
+      source.connect(env);
+      panner.pan.value = pan;
+      env.connect(panner);
+      panner.connect(renderGain);
+
+      source.start(time, readPos, grainDuration);
+      source.stop(time + grainDuration);
+
+      renderPos += hopSize / 2;
+    }
+
+    const renderedBuffer = await offlineCtx.startRendering();
+    const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+    
+    // Download WAV
+    const url = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Scherer_Ambient_Drone.wav`;
+    a.click();
+    status.textContent = "Export complete! File downloaded.";
+  };
+
+  // Convert AudioBuffer to WAV File Blob
+  function bufferToWave(abuffer, len) {
+    let numOfChan = abuffer.numberOfChannels,
+        length = len * numOfChan * 2 + 44,
+        buffer = new ArrayBuffer(length),
+        view = new DataView(buffer),
+        channels = [], i, sample,
+        offset = 0,
+        pos = 0;
+
+    function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+    function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+    setUint32(0x46464952); // "RIFF"
+    setUint32(length - 8);
+    setUint32(0x45564157); // "WAVE"
+    setUint32(0x20746d66); // "fmt " chunk
+    setUint32(16);
+    setUint16(1); // PCM
+    setUint16(numOfChan);
+    setUint32(abuffer.sampleRate);
+    setUint32(abuffer.sampleRate * 2 * numOfChan);
+    setUint16(numOfChan * 2);
+    setUint16(16);
+    setUint32(0x61746164); // "data" chunk
+    setUint32(length - pos - 4);
+
+    for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+
+    while(offset < len) {
+      for(i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+        view.setInt16(pos, sample, true);
+        pos += 2;
+      }
+      offset++;
+    }
+    return new Blob([buffer], {type: "audio/wav"});
   }
 </script>
 
