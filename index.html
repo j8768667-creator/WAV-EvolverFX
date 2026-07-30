@@ -15,27 +15,27 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --danger: #ef4444;
     }
 
     * {
       box-sizing: border-box;
-      touch-action: manipulation; /* Prevents double-tap zoom on iPad */
+      touch-action: manipulation;
     }
 
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
+      min-height: 100vh;
       background-color: var(--bg-color);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
-      -webkit-text-size-adjust: 100%;
     }
 
     body {
-      padding: 1rem;
+      padding: 1.5rem 1rem;
       display: flex;
       justify-content: center;
     }
@@ -51,7 +51,7 @@
     header {
       text-align: center;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 0.8rem;
+      padding-bottom: 1rem;
     }
 
     h1 {
@@ -66,26 +66,46 @@
       font-size: 0.9rem;
     }
 
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      background: var(--border);
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    .badge.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-export);
+    }
+
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.2rem;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .file-input-wrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 0.5rem;
       border: 2px dashed var(--border);
-      padding: 1.2rem;
+      padding: 2rem 1rem;
       border-radius: 8px;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: all 0.2s ease;
+      background: rgba(15, 23, 42, 0.5);
     }
 
-    .file-input-wrapper:hover {
+    .file-input-wrapper:active {
+      background: rgba(56, 189, 248, 0.1);
       border-color: var(--accent);
     }
 
@@ -95,18 +115,19 @@
 
     .canvas-container {
       position: relative;
-      margin-top: 0.8rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
 
     canvas {
       width: 100%;
-      height: 150px;
+      height: 160px;
       background-color: #0b1120;
-      border-radius: 6px;
-      border: 1px solid var(--border);
       cursor: crosshair;
       display: block;
-      touch-action: none; /* Disables canvas scrolling/zooming */
+      touch-action: none;
     }
 
     .selection-info {
@@ -115,7 +136,7 @@
       align-items: center;
       font-size: 0.85rem;
       color: var(--text-muted);
-      margin-top: 0.5rem;
+      margin-top: 0.8rem;
     }
 
     .btn {
@@ -127,44 +148,41 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 1rem;
-      transition: background-color 0.2s;
+      transition: opacity 0.2s;
     }
 
-    .btn:hover {
-      background-color: var(--accent-hover);
+    .btn:active {
+      opacity: 0.8;
     }
 
-    .btn-export {
-      background-color: var(--accent-export);
-      color: #000;
-    }
-
-    .btn-export:hover {
-      background-color: var(--accent-export-hover);
-    }
-
-    .btn-small {
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-    }
+    .btn-export { background-color: var(--accent-export); }
+    .btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; }
 
     .btn:disabled {
       background-color: var(--border);
       color: var(--text-muted);
       cursor: not-allowed;
-      opacity: 0.5;
+      opacity: 0.6;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.2rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
     }
 
     .control-group {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.8rem;
+    }
+
+    .control-group h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
     }
 
     label {
@@ -172,27 +190,26 @@
       font-weight: 600;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
-      height: 28px;
+      height: 32px; /* Taller for easier iPad tapping */
+      margin: 0;
     }
 
-    input[type="number"] {
+    select, input[type="number"] {
       background: var(--bg-color);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.4rem;
-      border-radius: 4px;
-      width: 70px;
+      padding: 0.6rem;
+      border-radius: 6px;
       font-size: 0.9rem;
     }
 
-    .value-display {
-      color: var(--accent);
-    }
+    .value-display { color: var(--accent); font-family: monospace; font-size: 0.95rem; }
 
     .transport-controls {
       display: flex;
@@ -205,7 +222,7 @@
     .export-wrapper {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.8rem;
       border-left: 1px solid var(--border);
       padding-left: 1rem;
     }
@@ -214,7 +231,10 @@
       text-align: center;
       font-style: italic;
       color: var(--text-muted);
-      margin-top: 0.8rem;
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: var(--bg-color);
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -224,11 +244,13 @@
   <header>
     <h1>Scherer WAV Studio</h1>
     <p>Granular Time-Stretcher & Ambient Sound Engine</p>
+    <div id="audioStatusBadge" class="badge">Audio Engine: Standby</div>
   </header>
 
   <div class="card">
-    <label class="file-input-wrapper" for="audioFile">
-      <span id="fileLabel">Tap or Drag & Drop WAV file here</span>
+    <label class="file-input-wrapper" id="fileWrapper" for="audioFile">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <span id="fileLabel">Tap to Select WAV/MP3 File</span>
       <input type="file" id="audioFile" accept="audio/*">
     </label>
     
@@ -244,22 +266,22 @@
 
   <div class="card grid">
     <div class="control-group">
-      <h3>Global & Effects</h3>
+      <h3>Global Settings</h3>
       <label>Master Volume <span id="volVal" class="value-display">80%</span></label>
       <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
 
-      <label>Global Pitch <span id="pitchVal" class="value-display">1.0x</span></label>
+      <label>Global Pitch <span id="pitchVal" class="value-display">1.00x</span></label>
       <input type="range" id="pitch" min="0.25" max="2.0" step="0.01" value="1.0">
-    </div>
-
-    <div class="control-group">
-      <h3>Scherer Engine (Granular)</h3>
+      
       <label>Engine Mode</label>
-      <select id="engineMode" style="padding: 0.5rem; border-radius: 4px; background: var(--bg-color); color: var(--text); border: 1px solid var(--border);">
+      <select id="engineMode">
         <option value="granular" selected>Granular Stretch</option>
         <option value="standard">Standard Playback</option>
       </select>
+    </div>
 
+    <div class="control-group">
+      <h3>Scherer Engine</h3>
       <label>Grain Size <span id="grainVal" class="value-display">40ms</span></label>
       <input type="range" id="grainSize" min="0.01" max="0.15" step="0.005" value="0.04">
 
@@ -277,41 +299,42 @@
   <div class="card">
     <div class="transport-controls">
       <button class="btn" id="playBtn" disabled>Play</button>
-      <button class="btn" id="stopBtn" disabled>Stop</button>
+      <button class="btn" id="stopBtn" disabled style="background-color: var(--danger);">Stop</button>
       
       <div class="export-wrapper">
-        <label style="margin: 0; font-weight: normal;">
+        <label style="margin: 0; font-weight: normal; color: var(--text-muted); gap: 0.5rem;">
           Export (s): 
-          <input type="number" id="exportDuration" value="15" min="1" max="600">
+          <input type="number" id="exportDuration" value="15" min="1" max="600" style="width: 60px;">
         </label>
         <button class="btn btn-export" id="exportBtn" disabled>Export WAV</button>
       </div>
     </div>
-    <p id="status" class="status">Please select an audio file to begin.</p>
+    <div id="status" class="status">Please select an audio file to begin.</div>
   </div>
 </div>
 
 <script>
-  // Block Double-Tap Zoom on iPad
+  // Block Double-Tap Zoom on iOS
   let lastTouchEnd = 0;
   document.addEventListener('touchend', (e) => {
     const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      e.preventDefault();
-    }
+    if (now - lastTouchEnd <= 300) { e.preventDefault(); }
     lastTouchEnd = now;
-  }, false);
+  }, { passive: false });
 
+  // Web Audio Variables
   let audioCtx = null;
   let audioBuffer = null;
   let masterGain = null;
   let standardSource = null;
   let isPlaying = false;
+  let isAudioUnlocked = false;
   
-  // Lookahead Scheduler Variables
-  let schedulerTimer = null;
+  // Scheduler Variables
+  let schedulerId = null;
   let nextGrainTime = 0;
   let currentPosition = 0;
+  const LOOKAHEAD = 0.15; // 150ms
 
   // Selection states (seconds)
   let selectionStart = 0;
@@ -320,86 +343,102 @@
   let selectionAnchor = 0;
 
   // UI Elements
-  const fileInput = document.getElementById('audioFile');
-  const fileLabel = document.getElementById('fileLabel');
-  const playBtn = document.getElementById('playBtn');
-  const stopBtn = document.getElementById('stopBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const resetSelectionBtn = document.getElementById('resetSelectionBtn');
-  const selectionText = document.getElementById('selectionText');
-  const exportDurationInput = document.getElementById('exportDuration');
-  const status = document.getElementById('status');
-  const canvas = document.getElementById('waveformCanvas');
-  const canvasCtx = canvas.getContext('2d');
+  const ui = {
+    fileInput: document.getElementById('audioFile'),
+    fileLabel: document.getElementById('fileLabel'),
+    playBtn: document.getElementById('playBtn'),
+    stopBtn: document.getElementById('stopBtn'),
+    exportBtn: document.getElementById('exportBtn'),
+    resetBtn: document.getElementById('resetSelectionBtn'),
+    status: document.getElementById('status'),
+    badge: document.getElementById('audioStatusBadge'),
+    canvas: document.getElementById('waveformCanvas'),
+    ctx: document.getElementById('waveformCanvas').getContext('2d'),
+    selectionText: document.getElementById('selectionText'),
+    exportDur: document.getElementById('exportDuration')
+  };
 
-  // Sliders
-  const volumeSlider = document.getElementById('volume');
-  const pitchSlider = document.getElementById('pitch');
-  const grainSizeSlider = document.getElementById('grainSize');
-  const spraySlider = document.getElementById('spray');
-  const stretchSlider = document.getElementById('stretch');
-  const jitterSlider = document.getElementById('jitter');
-  const engineModeSelect = document.getElementById('engineMode');
+  // Sliders & Displays
+  const controls = {
+    volume: { el: document.getElementById('volume'), val: document.getElementById('volVal'), format: v => `${Math.round(v * 100)}%` },
+    pitch: { el: document.getElementById('pitch'), val: document.getElementById('pitchVal'), format: v => `${parseFloat(v).toFixed(2)}x` },
+    grainSize: { el: document.getElementById('grainSize'), val: document.getElementById('grainVal'), format: v => `${Math.round(v * 1000)}ms` },
+    spray: { el: document.getElementById('spray'), val: document.getElementById('sprayVal'), format: v => `${Math.round(v * 1000)}ms` },
+    stretch: { el: document.getElementById('stretch'), val: document.getElementById('stretchVal'), format: v => `${parseFloat(v).toFixed(1)}x` },
+    jitter: { el: document.getElementById('jitter'), val: document.getElementById('jitterVal'), format: v => parseFloat(v).toFixed(3) },
+    mode: { el: document.getElementById('engineMode') }
+  };
 
-  // Value Displays
-  const volVal = document.getElementById('volVal');
-  const pitchVal = document.getElementById('pitchVal');
-  const grainVal = document.getElementById('grainVal');
-  const sprayVal = document.getElementById('sprayVal');
-  const stretchVal = document.getElementById('stretchVal');
-  const jitterVal = document.getElementById('jitterVal');
+  // Bind UI Controls
+  Object.keys(controls).forEach(key => {
+    if (key === 'mode') return;
+    controls[key].el.addEventListener('input', (e) => {
+      controls[key].val.textContent = controls[key].format(e.target.value);
+      if (key === 'volume' && masterGain) {
+        masterGain.gain.setTargetAtTime(parseFloat(e.target.value), audioCtx.currentTime, 0.05);
+      }
+    });
+  });
 
-  // Direct Audio Context Setup
-  function getAudioContext() {
+  // Bulletproof iOS Audio Unlocker
+  function initAudioEngine() {
+    if (isAudioUnlocked) return;
+    
+    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
     if (!audioCtx) {
-      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioCtxClass();
-
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = parseFloat(volumeSlider.value);
+      masterGain.gain.value = parseFloat(controls.volume.el.value);
       masterGain.connect(audioCtx.destination);
     }
+
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
-    return audioCtx;
+
+    // Force hardware pipeline open with a silent oscillator
+    const osc = audioCtx.createOscillator();
+    const silentGain = audioCtx.createGain();
+    silentGain.gain.value = 0;
+    osc.connect(silentGain);
+    silentGain.connect(audioCtx.destination);
+    osc.start(0);
+    osc.stop(audioCtx.currentTime + 0.01);
+
+    isAudioUnlocked = true;
+    ui.badge.textContent = "Audio Engine: Active";
+    ui.badge.classList.add('active');
   }
 
-  // iOS Safari Hardware Sound Unlocker
-  function unlockiOSAudio() {
-    const ctx = getAudioContext();
-    const silentBuffer = ctx.createBuffer(1, 1, 22050);
-    const node = ctx.createBufferSource();
-    node.buffer = silentBuffer;
-    node.connect(ctx.destination);
-    node.start(0);
-  }
+  // Bind Unlocker to global touch/click events (runs once)
+  ['touchstart', 'touchend', 'mousedown', 'click'].forEach(evt => {
+    document.body.addEventListener(evt, initAudioEngine, { once: true });
+  });
 
-  // Render Waveform & Selection Highlight
+  // Waveform Rendering
   function drawWaveform() {
     if (!audioBuffer) return;
-    const width = canvas.width = canvas.clientWidth * window.devicePixelRatio;
-    const height = canvas.height = canvas.clientHeight * window.devicePixelRatio;
-
+    const width = ui.canvas.width = ui.canvas.clientWidth * window.devicePixelRatio;
+    const height = ui.canvas.height = ui.canvas.clientHeight * window.devicePixelRatio;
     const data = audioBuffer.getChannelData(0);
     const step = Math.ceil(data.length / width);
     const amp = height / 2;
 
-    canvasCtx.fillStyle = '#0b1120';
-    canvasCtx.fillRect(0, 0, width, height);
+    ui.ctx.fillStyle = '#0b1120';
+    ui.ctx.fillRect(0, 0, width, height);
 
-    // Draw Selection Highlight
+    // Selection Highlight
     if (selectionStart > 0 || selectionEnd < audioBuffer.duration) {
       const xStart = (selectionStart / audioBuffer.duration) * width;
       const xEnd = (selectionEnd / audioBuffer.duration) * width;
-      canvasCtx.fillStyle = 'rgba(56, 189, 248, 0.35)';
-      canvasCtx.fillRect(xStart, 0, Math.max(2, xEnd - xStart), height);
+      ui.ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ui.ctx.fillRect(xStart, 0, Math.max(2, xEnd - xStart), height);
     }
 
-    // Draw Waveform Line
-    canvasCtx.beginPath();
-    canvasCtx.strokeStyle = '#38bdf8';
-    canvasCtx.lineWidth = 1 * window.devicePixelRatio;
+    // Waveform
+    ui.ctx.beginPath();
+    ui.ctx.strokeStyle = '#38bdf8';
+    ui.ctx.lineWidth = window.devicePixelRatio;
 
     for (let i = 0; i < width; i++) {
       let min = 1.0, max = -1.0;
@@ -408,33 +447,33 @@
         if (datum < min) min = datum;
         if (datum > max) max = datum;
       }
-      canvasCtx.moveTo(i, (1 + min) * amp);
-      canvasCtx.lineTo(i, (1 + max) * amp);
+      ui.ctx.moveTo(i, (1 + min) * amp);
+      ui.ctx.lineTo(i, (1 + max) * amp);
     }
-    canvasCtx.stroke();
+    ui.ctx.stroke();
   }
 
-  // Visual Playhead Tracker
+  // Playhead Animation
   function updatePlayhead() {
     if (!isPlaying || !audioBuffer) return;
     drawWaveform();
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = ui.canvas.width;
+    const height = ui.canvas.height;
     const x = (currentPosition / audioBuffer.duration) * width;
 
-    canvasCtx.strokeStyle = '#ef4444';
-    canvasCtx.lineWidth = 2 * window.devicePixelRatio;
-    canvasCtx.beginPath();
-    canvasCtx.moveTo(x, 0);
-    canvasCtx.lineTo(x, height);
-    canvasCtx.stroke();
+    ui.ctx.strokeStyle = 'var(--danger)';
+    ui.ctx.lineWidth = 2 * window.devicePixelRatio;
+    ui.ctx.beginPath();
+    ui.ctx.moveTo(x, 0);
+    ui.ctx.lineTo(x, height);
+    ui.ctx.stroke();
 
-    requestAnimationFrame(updatePlayhead);
+    if (isPlaying) requestAnimationFrame(updatePlayhead);
   }
 
-  // Touch / Mouse Position Calculator
+  // Touch/Mouse Selection Logic
   function getPosFromEvent(e) {
-    const rect = canvas.getBoundingClientRect();
+    const rect = ui.canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
     return (x / rect.width) * audioBuffer.duration;
@@ -442,7 +481,7 @@
 
   function handleStart(e) {
     if (!audioBuffer) return;
-    unlockiOSAudio();
+    initAudioEngine();
     isSelecting = true;
     selectionAnchor = getPosFromEvent(e);
     selectionStart = selectionAnchor;
@@ -454,13 +493,8 @@
   function handleMove(e) {
     if (!isSelecting || !audioBuffer) return;
     const currentPos = getPosFromEvent(e);
-    if (currentPos >= selectionAnchor) {
-      selectionStart = selectionAnchor;
-      selectionEnd = currentPos;
-    } else {
-      selectionStart = currentPos;
-      selectionEnd = selectionAnchor;
-    }
+    selectionStart = Math.min(selectionAnchor, currentPos);
+    selectionEnd = Math.max(selectionAnchor, currentPos);
     updateSelectionUI();
     drawWaveform();
   }
@@ -468,7 +502,6 @@
   function handleEnd() {
     if (!isSelecting) return;
     isSelecting = false;
-    // Tapping without dragging resets range to full sample
     if (Math.abs(selectionEnd - selectionStart) < 0.05) {
       resetSelection();
     } else {
@@ -476,16 +509,13 @@
     }
   }
 
-  // Event Listeners for Touch and Mouse Canvas Selection
-  canvas.addEventListener('mousedown', handleStart);
+  ui.canvas.addEventListener('mousedown', handleStart);
   window.addEventListener('mousemove', handleMove);
   window.addEventListener('mouseup', handleEnd);
-
-  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
-  window.addEventListener('touchmove', (e) => { if (isSelecting) handleMove(e); }, { passive: false });
+  ui.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
+  window.addEventListener('touchmove', (e) => { if (isSelecting) { e.preventDefault(); handleMove(e); } }, { passive: false });
   window.addEventListener('touchend', handleEnd);
 
-  // Reset Button Action
   function resetSelection() {
     if (!audioBuffer) return;
     selectionStart = 0;
@@ -495,142 +525,142 @@
     drawWaveform();
   }
 
-  resetSelectionBtn.addEventListener('click', resetSelection);
-  resetSelectionBtn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    resetSelection();
-  });
+  ui.resetBtn.addEventListener('click', resetSelection);
+  ui.resetBtn.addEventListener('touchend', (e) => { e.preventDefault(); resetSelection(); });
 
   function updateSelectionUI() {
     if (!audioBuffer) return;
     const isFull = (selectionStart === 0 && selectionEnd === audioBuffer.duration);
     if (isFull) {
-      selectionText.textContent = `Selection: Entire Sample (${audioBuffer.duration.toFixed(2)}s)`;
-      resetSelectionBtn.disabled = true;
+      ui.selectionText.textContent = `Selection: Entire Sample (${audioBuffer.duration.toFixed(2)}s)`;
+      ui.resetBtn.disabled = true;
     } else {
-      selectionText.textContent = `Selection: ${selectionStart.toFixed(2)}s - ${selectionEnd.toFixed(2)}s (${(selectionEnd - selectionStart).toFixed(2)}s)`;
-      resetSelectionBtn.disabled = false;
+      ui.selectionText.textContent = `Selection: ${selectionStart.toFixed(2)}s - ${selectionEnd.toFixed(2)}s`;
+      ui.resetBtn.disabled = false;
     }
   }
 
-  // File Upload Handler
-  fileInput.addEventListener('change', async (e) => {
+  // File Upload (Using legacy callback for strict iOS Safari compatibility)
+  ui.fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    unlockiOSAudio();
-    fileLabel.textContent = file.name;
-    status.textContent = "Decoding audio file...";
+    initAudioEngine();
+    ui.fileLabel.textContent = file.name;
+    ui.status.textContent = "Decoding audio file...";
 
-    const arrayBuffer = await file.arrayBuffer();
-    try {
-      const ctx = getAudioContext();
-      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      status.textContent = `Loaded: ${file.name} | Duration: ${audioBuffer.duration.toFixed(2)}s`;
-      playBtn.disabled = false;
-      stopBtn.disabled = false;
-      exportBtn.disabled = false;
-      resetSelection();
-    } catch (err) {
-      status.textContent = "Error decoding audio file. Please try a standard WAV/MP3.";
-    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const arrayBuffer = evt.target.result;
+      audioCtx.decodeAudioData(arrayBuffer, 
+        (buffer) => {
+          audioBuffer = buffer;
+          ui.status.textContent = `Loaded: ${file.name} | Duration: ${audioBuffer.duration.toFixed(2)}s`;
+          ui.playBtn.disabled = false;
+          ui.stopBtn.disabled = false;
+          ui.exportBtn.disabled = false;
+          resetSelection();
+        },
+        (error) => {
+          ui.status.textContent = "Error decoding audio. Try a standard WAV/MP3 file.";
+          console.error(error);
+        }
+      );
+    };
+    reader.readAsArrayBuffer(file);
   });
 
-  // UI Slider Bindings
-  volumeSlider.oninput = (e) => { 
-    volVal.textContent = `${Math.round(e.target.value * 100)}%`; 
-    if (masterGain) masterGain.gain.value = parseFloat(e.target.value); 
-  };
-  pitchSlider.oninput = (e) => { pitchVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`; };
-  grainSizeSlider.oninput = (e) => grainVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
-  spraySlider.oninput = (e) => sprayVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
-  stretchSlider.oninput = (e) => stretchVal.textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
-  jitterSlider.oninput = (e) => jitterVal.textContent = parseFloat(e.target.value).toFixed(3);
-
-  // Play / Stop Controls
-  playBtn.onclick = () => {
+  // Play / Stop
+  ui.playBtn.onclick = () => {
     if (!audioBuffer) return;
-    unlockiOSAudio();
-
+    initAudioEngine();
     stopAudio();
+    
     isPlaying = true;
+    ui.status.textContent = "Playing...";
 
-    if (engineModeSelect.value === 'standard') {
+    if (controls.mode.el.value === 'standard') {
       playStandard();
     } else {
       if (currentPosition < selectionStart || currentPosition >= selectionEnd) {
         currentPosition = selectionStart;
       }
-      // Ensure scheduler starts at current audio context time
-      nextGrainTime = audioCtx.currentTime + 0.02;
-      runScheduler();
+      nextGrainTime = audioCtx.currentTime + 0.05;
+      schedulerLoop();
       requestAnimationFrame(updatePlayhead);
     }
-    status.textContent = "Playing...";
   };
 
-  stopBtn.onclick = () => {
+  ui.stopBtn.onclick = () => {
     stopAudio();
-    status.textContent = "Stopped.";
+    ui.status.textContent = "Stopped.";
     drawWaveform();
   };
 
   function stopAudio() {
     isPlaying = false;
     if (standardSource) { try { standardSource.stop(); } catch(e){} standardSource = null; }
-    if (schedulerTimer) { clearInterval(schedulerTimer); schedulerTimer = null; }
+    if (schedulerId) { cancelAnimationFrame(schedulerId); schedulerId = null; }
   }
 
   function playStandard() {
     standardSource = audioCtx.createBufferSource();
     standardSource.buffer = audioBuffer;
-    standardSource.playbackRate.value = parseFloat(pitchSlider.value);
+    standardSource.playbackRate.value = parseFloat(controls.pitch.el.value);
     standardSource.loop = true;
     standardSource.loopStart = selectionStart;
     standardSource.loopEnd = selectionEnd;
     standardSource.connect(masterGain);
     standardSource.start(0, selectionStart);
+    
+    // Playhead logic for standard playback
+    let startTime = audioCtx.currentTime;
+    let startPos = selectionStart;
+    
+    function trackStandard() {
+      if (!isPlaying || controls.mode.el.value !== 'standard') return;
+      let elapsed = (audioCtx.currentTime - startTime) * parseFloat(controls.pitch.el.value);
+      let loopDuration = selectionEnd - selectionStart;
+      currentPosition = startPos + (elapsed % loopDuration);
+      updatePlayhead();
+      requestAnimationFrame(trackStandard);
+    }
+    requestAnimationFrame(trackStandard);
   }
 
-  // --- Granular Engine Lookahead Scheduler ---
-  function runScheduler() {
-    const lookahead = 0.15; // 150ms lookahead buffer for iOS
-    
-    schedulerTimer = setInterval(() => {
-      if (!isPlaying) return;
+  // requestAnimationFrame Granular Scheduler (Highly reliable on iOS)
+  function schedulerLoop() {
+    if (!isPlaying) return;
 
-      // Catch-up safeguard to prevent silent lockups if execution pauses
-      if (nextGrainTime < audioCtx.currentTime) {
-        nextGrainTime = audioCtx.currentTime + 0.02;
-      }
+    // Failsafe: If browser suspended tab, fast-forward time
+    if (nextGrainTime < audioCtx.currentTime) {
+      nextGrainTime = audioCtx.currentTime + 0.05;
+    }
 
-      while (nextGrainTime < audioCtx.currentTime + lookahead) {
-        scheduleNextGrain(nextGrainTime);
-      }
-    }, 30);
+    while (nextGrainTime < audioCtx.currentTime + LOOKAHEAD) {
+      scheduleNextGrain(nextGrainTime);
+    }
+    schedulerId = requestAnimationFrame(schedulerLoop);
   }
 
   function scheduleNextGrain(startTime) {
-    const grainDuration = parseFloat(grainSizeSlider.value);
-    const spray = parseFloat(spraySlider.value);
-    const stretch = parseFloat(stretchSlider.value);
-    const basePitch = parseFloat(pitchSlider.value);
-    const jitter = parseFloat(jitterSlider.value);
+    const dur = parseFloat(controls.grainSize.el.value);
+    const spray = parseFloat(controls.spray.el.value);
+    const stretch = parseFloat(controls.stretch.el.value);
+    const basePitch = parseFloat(controls.pitch.el.value);
+    const jitter = parseFloat(controls.jitter.el.value);
 
-    const randomOffset = (Math.random() - 0.5) * spray;
-    let readPos = currentPosition + randomOffset;
-
+    let readPos = currentPosition + ((Math.random() - 0.5) * spray);
     if (readPos < selectionStart) readPos = selectionStart;
-    if (readPos >= selectionEnd - grainDuration) {
+    if (readPos >= selectionEnd - dur) {
       readPos = selectionStart;
       currentPosition = selectionStart;
     }
 
-    const pitch = Math.max(0.05, basePitch + (Math.random() - 0.5) * jitter);
+    const pitch = Math.max(0.05, basePitch + ((Math.random() - 0.5) * jitter));
+    spawnGrain(startTime, readPos, dur, pitch);
 
-    spawnGrain(startTime, readPos, grainDuration, pitch);
-
-    const hopSize = grainDuration / stretch;
+    const hopSize = dur / stretch;
     currentPosition += hopSize / 2;
     nextGrainTime += hopSize / 2;
   }
@@ -641,80 +671,79 @@
     source.playbackRate.value = pitchRate;
 
     const env = audioCtx.createGain();
-
-    // Fade-in / Fade-out envelope to avoid clicks
-    env.gain.setValueAtTime(0.0001, startTime);
-    env.gain.linearRampToValueAtTime(0.8, startTime + duration / 2);
-    env.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+    
+    // Linear ramping to prevent iOS clipping/clicking
+    env.gain.setValueAtTime(0, startTime);
+    env.gain.linearRampToValueAtTime(1.0, startTime + (duration * 0.5));
+    env.gain.linearRampToValueAtTime(0, startTime + duration);
 
     source.connect(env);
     env.connect(masterGain);
 
     source.start(startTime, offset, duration);
-    source.stop(startTime + duration + 0.01);
+    source.stop(startTime + duration + 0.05);
   }
 
-  // --- WAV Exporter ---
-  exportBtn.onclick = async () => {
+  // Offline WAV Export
+  ui.exportBtn.onclick = async () => {
     if (!audioBuffer) return;
-    unlockiOSAudio();
+    initAudioEngine();
 
-    const exportDuration = Math.max(1, parseFloat(exportDurationInput.value) || 15);
-    status.textContent = `Rendering ${exportDuration}s WAV export...`;
+    const expDur = Math.max(1, parseFloat(ui.exportDur.value) || 15);
+    ui.status.textContent = `Rendering ${expDur}s WAV file...`;
 
-    const sampleRate = 44100;
-    const offlineCtx = new OfflineAudioContext(2, sampleRate * exportDuration, sampleRate);
+    const sampleRate = audioBuffer.sampleRate || 44100;
+    const offlineCtx = new OfflineAudioContext(2, sampleRate * expDur, sampleRate);
+    
     const renderGain = offlineCtx.createGain();
-    renderGain.gain.value = parseFloat(volumeSlider.value);
+    renderGain.gain.value = parseFloat(controls.volume.el.value);
     renderGain.connect(offlineCtx.destination);
 
     let renderPos = selectionStart;
-    const grainDuration = parseFloat(grainSizeSlider.value);
-    const spray = parseFloat(spraySlider.value);
-    const stretch = parseFloat(stretchSlider.value);
-    const basePitch = parseFloat(pitchSlider.value);
-    const jitter = parseFloat(jitterSlider.value);
-    const hopSize = grainDuration / stretch;
+    const dur = parseFloat(controls.grainSize.el.value);
+    const spray = parseFloat(controls.spray.el.value);
+    const stretch = parseFloat(controls.stretch.el.value);
+    const basePitch = parseFloat(controls.pitch.el.value);
+    const jitter = parseFloat(controls.jitter.el.value);
+    const hopSize = dur / stretch;
 
-    for (let time = 0; time < exportDuration; time += hopSize / 2) {
-      const randomOffset = (Math.random() - 0.5) * spray;
-      let readPos = renderPos + randomOffset;
-      
+    for (let time = 0; time < expDur; time += hopSize / 2) {
+      let readPos = renderPos + ((Math.random() - 0.5) * spray);
       if (readPos < selectionStart) readPos = selectionStart;
-      if (readPos >= selectionEnd - grainDuration) { 
-        readPos = selectionStart; 
-        renderPos = selectionStart; 
-      }
+      if (readPos >= selectionEnd - dur) { readPos = selectionStart; renderPos = selectionStart; }
 
-      const pitch = Math.max(0.05, basePitch + (Math.random() - 0.5) * jitter);
-
+      const pitch = Math.max(0.05, basePitch + ((Math.random() - 0.5) * jitter));
+      
       const source = offlineCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.playbackRate.value = pitch;
 
       const env = offlineCtx.createGain();
-      env.gain.setValueAtTime(0.0001, time);
-      env.gain.linearRampToValueAtTime(0.8, time + grainDuration / 2);
-      env.gain.linearRampToValueAtTime(0.0001, time + grainDuration);
+      env.gain.setValueAtTime(0, time);
+      env.gain.linearRampToValueAtTime(1.0, time + (dur * 0.5));
+      env.gain.linearRampToValueAtTime(0, time + dur);
 
       source.connect(env);
       env.connect(renderGain);
 
-      source.start(time, readPos, grainDuration);
-      source.stop(time + grainDuration + 0.01);
+      source.start(time, readPos, dur);
+      source.stop(time + dur + 0.05);
 
       renderPos += hopSize / 2;
     }
 
-    const renderedBuffer = await offlineCtx.startRendering();
-    const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
-    
-    const url = URL.createObjectURL(wavBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Scherer_Export_${exportDuration}s.wav`;
-    a.click();
-    status.textContent = "Export ready! Downloading WAV file.";
+    try {
+      const renderedBuffer = await offlineCtx.startRendering();
+      const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Scherer_Export_${expDur}s.wav`;
+      a.click();
+      ui.status.textContent = "Export complete! File downloaded.";
+    } catch (e) {
+      ui.status.textContent = "Export failed. File may be too long.";
+    }
   };
 
   // Binary WAV Encoder
