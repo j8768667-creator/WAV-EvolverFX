@@ -94,7 +94,7 @@
       border: 1px solid var(--border);
       cursor: crosshair;
       display: block;
-      touch-action: none; /* Prevents iPad page scroll while dragging sample selection */
+      touch-action: none;
     }
 
     .selection-info {
@@ -287,9 +287,13 @@
 <script>
   let audioCtx = null, audioBuffer = null, standardSource = null, isPlaying = false;
   let mainGain = null, delayNode = null, feedbackGain = null;
-  let grainTimer = null, currentPosition = 0;
+  
+  // Lookahead Scheduler Variables
+  let schedulerTimer = null;
+  let nextGrainTime = 0;
+  let currentPosition = 0;
 
-  // Selection state
+  // Selection states (seconds)
   let selectionStart = 0;
   let selectionEnd = 0;
   let isSelecting = false;
@@ -329,8 +333,8 @@
   const spreadVal = document.getElementById('spreadVal');
   const jitterVal = document.getElementById('jitterVal');
 
-  // iOS Web Audio Context Initialization & Unlock
-  function getAudioContext() {
+  // Initialize Web Audio Context & Graph
+  function initAudioContext() {
     if (!audioCtx) {
       const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioCtxClass();
@@ -343,20 +347,29 @@
       feedbackGain = audioCtx.createGain();
       feedbackGain.gain.value = parseFloat(reverbSlider.value);
 
-      // Connect graph safely
       mainGain.connect(audioCtx.destination);
       mainGain.connect(delayNode);
       delayNode.connect(feedbackGain);
       feedbackGain.connect(delayNode);
       delayNode.connect(audioCtx.destination);
     }
+  }
+
+  // iOS Safari User Interaction Audio Unlocker
+  function unlockiOSAudio() {
+    initAudioContext();
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
-    return audioCtx;
+    // Play an instantaneous silent buffer to unlock iOS Safari hardware audio pipeline
+    const buffer = audioCtx.createBuffer(1, 1, 22050);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
   }
 
-  // Draw Waveform & Selection Mask
+  // Render Audio Waveform & Selection Highlight
   function drawWaveform() {
     if (!audioBuffer) return;
     const width = canvas.width = canvas.clientWidth * window.devicePixelRatio;
@@ -369,18 +382,18 @@
     canvasCtx.fillStyle = '#0b1120';
     canvasCtx.fillRect(0, 0, width, height);
 
-    // Render Selection Region Highlight
-    if (selectionStart !== 0 || selectionEnd !== audioBuffer.duration) {
+    // Render Selection Range
+    if (selectionStart > 0 || selectionEnd < audioBuffer.duration) {
       const xStart = (selectionStart / audioBuffer.duration) * width;
       const xEnd = (selectionEnd / audioBuffer.duration) * width;
-      canvasCtx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      canvasCtx.fillStyle = 'rgba(56, 189, 248, 0.3)';
       canvasCtx.fillRect(xStart, 0, Math.max(2, xEnd - xStart), height);
     }
 
-    // Draw Waveform Lines
+    // Draw Waveform Line
     canvasCtx.beginPath();
     canvasCtx.strokeStyle = '#38bdf8';
-    canvasCtx.lineWidth = 1;
+    canvasCtx.lineWidth = 1 * window.devicePixelRatio;
 
     for (let i = 0; i < width; i++) {
       let min = 1.0, max = -1.0;
@@ -404,7 +417,7 @@
     const x = (currentPosition / audioBuffer.duration) * width;
 
     canvasCtx.strokeStyle = '#ef4444';
-    canvasCtx.lineWidth = 2;
+    canvasCtx.lineWidth = 2 * window.devicePixelRatio;
     canvasCtx.beginPath();
     canvasCtx.moveTo(x, 0);
     canvasCtx.lineTo(x, height);
@@ -413,7 +426,7 @@
     requestAnimationFrame(updatePlayhead);
   }
 
-  // Selection Logic - Works for both iPad Touch & Mouse
+  // Touch / Mouse Position Calculator
   function getPosFromEvent(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -423,7 +436,7 @@
 
   function handleStart(e) {
     if (!audioBuffer) return;
-    getAudioContext();
+    unlockiOSAudio();
     isSelecting = true;
     selectionAnchor = getPosFromEvent(e);
     selectionStart = selectionAnchor;
@@ -449,7 +462,7 @@
   function handleEnd() {
     if (!isSelecting) return;
     isSelecting = false;
-    // Reset if touch was just a single tap
+    // Single tap resets range to full sample
     if (Math.abs(selectionEnd - selectionStart) < 0.05) {
       resetSelection();
     } else {
@@ -457,12 +470,11 @@
     }
   }
 
-  // Mouse Listeners
+  // Event Listeners for Touch and Mouse
   canvas.addEventListener('mousedown', handleStart);
   window.addEventListener('mousemove', handleMove);
   window.addEventListener('mouseup', handleEnd);
 
-  // iPad Touch Listeners
   canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
   window.addEventListener('touchmove', (e) => { if (isSelecting) handleMove(e); }, { passive: false });
   window.addEventListener('touchend', handleEnd);
@@ -489,19 +501,19 @@
     resetSelectionBtn.disabled = isFull;
   }
 
-  // File Upload
+  // File Upload Handler
   fileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const ctx = getAudioContext();
+    unlockiOSAudio();
     fileLabel.textContent = file.name;
     status.textContent = "Decoding WAV file...";
 
     const arrayBuffer = await file.arrayBuffer();
     try {
-      audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      status.textContent = `Loaded: ${file.name} | ${audioBuffer.duration.toFixed(2)}s`;
+      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      status.textContent = `Loaded: ${file.name} | Duration: ${audioBuffer.duration.toFixed(2)}s`;
       playBtn.disabled = false;
       stopBtn.disabled = false;
       exportBtn.disabled = false;
@@ -511,7 +523,7 @@
     }
   });
 
-  // Controls UI updates
+  // UI Slider Bindings
   volumeSlider.oninput = (e) => { volVal.textContent = `${Math.round(e.target.value * 100)}%`; if (mainGain) mainGain.gain.value = e.target.value; };
   pitchSlider.oninput = (e) => { pitchVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`; };
   reverbSlider.oninput = (e) => { reverbVal.textContent = `${Math.round(e.target.value * 100)}%`; if (feedbackGain) feedbackGain.gain.value = e.target.value; };
@@ -521,10 +533,10 @@
   spreadSlider.oninput = (e) => spreadVal.textContent = `${Math.round(e.target.value * 100)}%`;
   jitterSlider.oninput = (e) => jitterVal.textContent = parseFloat(e.target.value).toFixed(3);
 
-  playBtn.onclick = async () => {
+  // Play / Stop Controls
+  playBtn.onclick = () => {
     if (!audioBuffer) return;
-    const ctx = getAudioContext();
-    if (ctx.state === 'suspended') await ctx.resume();
+    unlockiOSAudio();
 
     stopAudio();
     isPlaying = true;
@@ -535,7 +547,8 @@
       if (currentPosition < selectionStart || currentPosition >= selectionEnd) {
         currentPosition = selectionStart;
       }
-      playGranular();
+      nextGrainTime = audioCtx.currentTime;
+      runScheduler();
       requestAnimationFrame(updatePlayhead);
     }
     status.textContent = "Playing...";
@@ -550,12 +563,11 @@
   function stopAudio() {
     isPlaying = false;
     if (standardSource) { try { standardSource.stop(); } catch(e){} standardSource = null; }
-    if (grainTimer) { clearTimeout(grainTimer); grainTimer = null; }
+    if (schedulerTimer) { clearInterval(schedulerTimer); schedulerTimer = null; }
   }
 
   function playStandard() {
-    const ctx = getAudioContext();
-    standardSource = ctx.createBufferSource();
+    standardSource = audioCtx.createBufferSource();
     standardSource.buffer = audioBuffer;
     standardSource.playbackRate.value = parseFloat(pitchSlider.value);
     standardSource.loop = true;
@@ -565,9 +577,20 @@
     standardSource.start(0, selectionStart);
   }
 
-  function playGranular() {
-    if (!isPlaying) return;
+  // --- Granular Engine Lookahead Scheduler ---
+  function runScheduler() {
+    const lookahead = 0.1; // Schedule audio 100ms in advance
+    
+    schedulerTimer = setInterval(() => {
+      if (!isPlaying) return;
 
+      while (nextGrainTime < audioCtx.currentTime + lookahead) {
+        scheduleNextGrain(nextGrainTime);
+      }
+    }, 25); // Check queue every 25ms
+  }
+
+  function scheduleNextGrain(startTime) {
     const grainDuration = parseFloat(grainSizeSlider.value);
     const spray = parseFloat(spraySlider.value);
     const stretch = parseFloat(stretchSlider.value);
@@ -587,31 +610,28 @@
     const pitch = Math.max(0.05, basePitch + (Math.random() - 0.5) * jitter);
     const pan = (Math.random() - 0.5) * 2 * spread;
 
-    spawnGrain(readPos, grainDuration, pitch, pan, audioCtx, mainGain);
+    spawnGrain(startTime, readPos, grainDuration, pitch, pan, audioCtx, mainGain);
 
     const hopSize = grainDuration / stretch;
     currentPosition += hopSize / 2;
-
-    grainTimer = setTimeout(playGranular, (hopSize / 2) * 1000);
+    nextGrainTime += hopSize / 2;
   }
 
-  // iPad Safe Grain Spawner
-  function spawnGrain(offset, duration, pitchRate, panVal, ctx, destination) {
+  function spawnGrain(startTime, offset, duration, pitchRate, panVal, ctx, destination) {
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
     source.playbackRate.value = pitchRate;
 
     const env = ctx.createGain();
-    const now = ctx.currentTime;
 
-    // Linear ramp safe for iOS Safari / WebKit
-    env.gain.setValueAtTime(0.001, now);
-    env.gain.linearRampToValueAtTime(0.7, now + duration / 2);
-    env.gain.linearRampToValueAtTime(0.001, now + duration);
+    // Envelope windowing
+    env.gain.setValueAtTime(0.0001, startTime);
+    env.gain.linearRampToValueAtTime(0.8, startTime + duration / 2);
+    env.gain.linearRampToValueAtTime(0.0001, startTime + duration);
 
     source.connect(env);
 
-    // Safari / WebKit StereoPanner Safe Check
+    // iPad / WebKit Stereo Panner safe fallback
     if (typeof ctx.createStereoPanner === 'function') {
       try {
         const panner = ctx.createStereoPanner();
@@ -625,13 +645,15 @@
       env.connect(destination);
     }
 
-    source.start(now, offset, duration);
-    source.stop(now + duration + 0.02);
+    source.start(startTime, offset, duration);
+    source.stop(startTime + duration + 0.01);
   }
 
-  // WAV Exporter
+  // --- WAV Exporter ---
   exportBtn.onclick = async () => {
     if (!audioBuffer) return;
+    unlockiOSAudio();
+
     const exportDuration = Math.max(1, parseFloat(exportDurationInput.value) || 15);
     status.textContent = `Rendering ${exportDuration}s WAV export...`;
 
@@ -668,9 +690,9 @@
       source.playbackRate.value = pitch;
 
       const env = offlineCtx.createGain();
-      env.gain.setValueAtTime(0.001, time);
-      env.gain.linearRampToValueAtTime(0.7, time + grainDuration / 2);
-      env.gain.linearRampToValueAtTime(0.001, time + grainDuration);
+      env.gain.setValueAtTime(0.0001, time);
+      env.gain.linearRampToValueAtTime(0.8, time + grainDuration / 2);
+      env.gain.linearRampToValueAtTime(0.0001, time + grainDuration);
 
       source.connect(env);
 
@@ -688,7 +710,7 @@
       }
 
       source.start(time, readPos, grainDuration);
-      source.stop(time + grainDuration + 0.02);
+      source.stop(time + grainDuration + 0.01);
 
       renderPos += hopSize / 2;
     }
@@ -701,9 +723,10 @@
     a.href = url;
     a.download = `Scherer_Ambient_${exportDuration}s.wav`;
     a.click();
-    status.textContent = "Export ready! Downloading WAV file.";
+    status.textContent = "Export complete! File downloaded.";
   };
 
+  // Binary WAV Encoder
   function bufferToWave(abuffer, len) {
     let numOfChan = abuffer.numberOfChannels,
         length = len * numOfChan * 2 + 44,
