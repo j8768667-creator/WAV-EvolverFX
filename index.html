@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scherer - Granular & Musical WAV Studio</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 2rem;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin: 0.5rem 0 0 0;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .file-input-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      border: 2px dashed var(--border);
+      padding: 2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .file-input-wrapper:hover {
+      border-color: var(--accent);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      background-color: var(--accent);
+      color: var(--bg-color);
+      font-weight: bold;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn:disabled {
+      background-color: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .value-display {
+      color: var(--accent);
+    }
+
+    .transport-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .status {
+      text-align: center;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Scherer WAV Studio</h1>
+    <p>Ambient Granular Time-Stretcher & Musical Sample Manipulator</p>
+  </header>
+
+  <div class="card">
+    <label class="file-input-wrapper" for="audioFile">
+      <span id="fileLabel">Click or Drag & Drop a WAV file here</span>
+      <input type="file" id="audioFile" accept="audio/wav, audio/x-wav">
+    </label>
+  </div>
+
+  <div class="card grid">
+    <div class="control-group">
+      <h3>Global Controls</h3>
+      <label>Master Volume <span id="volVal" class="value-display">80%</span></label>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+
+      <label>Global Pitch / Rate <span id="pitchVal" class="value-display">1.0x</span></label>
+      <input type="range" id="pitch" min="0.25" max="2.0" step="0.01" value="1.0">
+    </div>
+
+    <div class="control-group">
+      <h3>Scherer Engine (Granular)</h3>
+      <label>Engine Mode</label>
+      <select id="engineMode" style="padding: 0.5rem; border-radius: 4px; background: var(--bg-color); color: var(--text); border: 1px solid var(--border);">
+        <option value="standard">Standard Playback</option>
+        <option value="granular" selected>Granular Stretch</option>
+      </select>
+
+      <label>Grain Size <span id="grainVal" class="value-display">30ms</span></label>
+      <input type="range" id="grainSize" min="0.01" max="0.1" step="0.005" value="0.03">
+
+      <label>Spray / Randomness <span id="sprayVal" class="value-display">10ms</span></label>
+      <input type="range" id="spray" min="0" max="0.1" step="0.005" value="0.01">
+
+      <label>Stretch Factor <span id="stretchVal" class="value-display">4.0x</span></label>
+      <input type="range" id="stretch" min="0.5" max="10.0" step="0.1" value="4.0">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="transport-controls">
+      <button class="btn" id="playBtn" disabled>Play</button>
+      <button class="btn" id="stopBtn" disabled>Stop</button>
+    </div>
+    <p id="status" class="status">Please load a WAV file to start.</p>
+  </div>
+</div>
+
+<script>
+  let audioCtx;
+  let audioBuffer = null;
+  let standardSource = null;
+  let isPlaying = false;
+  let gainNode;
+
+  // Granular engine state
+  let grainTimer = null;
+  let currentPosition = 0;
+
+  // UI Elements
+  const fileInput = document.getElementById('audioFile');
+  const fileLabel = document.getElementById('fileLabel');
+  const playBtn = document.getElementById('playBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const status = document.getElementById('status');
+
+  const volumeSlider = document.getElementById('volume');
+  const pitchSlider = document.getElementById('pitch');
+  const grainSizeSlider = document.getElementById('grainSize');
+  const spraySlider = document.getElementById('spray');
+  const stretchSlider = document.getElementById('stretch');
+  const engineModeSelect = document.getElementById('engineMode');
+
+  // Value Displays
+  const volVal = document.getElementById('volVal');
+  const pitchVal = document.getElementById('pitchVal');
+  const grainVal = document.getElementById('grainVal');
+  const sprayVal = document.getElementById('sprayVal');
+  const stretchVal = document.getElementById('stretchVal');
+
+  // Initialize Web Audio Context
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      gainNode = audioCtx.createGain();
+      gainNode.gain.value = parseFloat(volumeSlider.value);
+      gainNode.connect(audioCtx.destination);
+    }
+  }
+
+  // File Upload Handler
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    initAudio();
+    fileLabel.textContent = file.name;
+    status.textContent = "Loading audio buffer...";
+
+    const arrayBuffer = await file.arrayBuffer();
+    try {
+      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      status.textContent = `Loaded: ${file.name} (${audioBuffer.duration.toFixed(2)}s)`;
+      playBtn.disabled = false;
+      stopBtn.disabled = false;
+    } catch (err) {
+      status.textContent = "Error decoding WAV file.";
+      console.error(err);
+    }
+  });
+
+  // UI Value Updates
+  volumeSlider.addEventListener('input', (e) => {
+    volVal.textContent = `${Math.round(e.target.value * 100)}%`;
+    if (gainNode) gainNode.gain.value = e.target.value;
+  });
+
+  pitchSlider.addEventListener('input', (e) => {
+    pitchVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`;
+    if (standardSource) standardSource.playbackRate.value = e.target.value;
+  });
+
+  grainSizeSlider.addEventListener('input', (e) => {
+    grainVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
+  });
+
+  spraySlider.addEventListener('input', (e) => {
+    sprayVal.textContent = `${Math.round(e.target.value * 1000)}ms`;
+  });
+
+  stretchSlider.addEventListener('input', (e) => {
+    stretchVal.textContent = `${parseFloat(e.target.value).toFixed(1)}x`;
+  });
+
+  // Play / Stop Handlers
+  playBtn.addEventListener('click', () => {
+    if (!audioBuffer) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    stopAudio(); // Stop any currently running audio
+    isPlaying = true;
+
+    const mode = engineModeSelect.value;
+    if (mode === 'standard') {
+      playStandard();
+    } else {
+      playGranular();
+    }
+    status.textContent = `Playing in ${mode.toUpperCase()} mode...`;
+  });
+
+  stopBtn.addEventListener('click', () => {
+    stopAudio();
+    status.textContent = "Stopped.";
+  });
+
+  function stopAudio() {
+    isPlaying = false;
+    if (standardSource) {
+      standardSource.stop();
+      standardSource = null;
+    }
+    if (grainTimer) {
+      clearTimeout(grainTimer);
+      grainTimer = null;
+    }
+  }
+
+  // 1. Standard Playback Engine
+  function playStandard() {
+    standardSource = audioCtx.createBufferSource();
+    standardSource.buffer = audioBuffer;
+    standardSource.playbackRate.value = parseFloat(pitchSlider.value);
+    standardSource.loop = true;
+    standardSource.connect(gainNode);
+    standardSource.start(0);
+  }
+
+  // 2. Scherer Granular Engine
+  function playGranular() {
+    const grainDuration = parseFloat(grainSizeSlider.value);
+    const spray = parseFloat(spraySlider.value);
+    const stretch = parseFloat(stretchSlider.value);
+    const pitch = parseFloat(pitchSlider.value);
+
+    // Calculate position offset with random spray
+    const randomOffset = (Math.random() - 0.5) * spray;
+    let readPos = currentPosition + randomOffset;
+
+    // Wrap around position bounds
+    if (readPos < 0) readPos = 0;
+    if (readPos >= audioBuffer.duration - grainDuration) {
+      readPos = 0;
+      currentPosition = 0;
+    }
+
+    // Spawn a single grain
+    spawnGrain(readPos, grainDuration, pitch);
+
+    // Advance position based on stretch factor
+    const hopSize = grainDuration / stretch;
+    currentPosition += hopSize / 2;
+
+    // Schedule next grain spawn
+    if (isPlaying) {
+      grainTimer = setTimeout(playGranular, (hopSize / 2) * 1000);
+    }
+  }
+
+  function spawnGrain(offset, duration, pitchRate) {
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.playbackRate.value = pitchRate;
+
+    // Apply Hanning Window Enveloping to eliminate clicks
+    const env = audioCtx.createGain();
+    const now = audioCtx.currentTime;
+
+    env.gain.setValueAtTime(0, now);
+    env.gain.linearRampToValueAtTime(1, now + duration / 2);
+    env.gain.linearRampToValueAtTime(0, now + duration);
+
+    source.connect(env);
+    env.connect(gainNode);
+
+    source.start(now, offset, duration);
+    source.stop(now + duration);
+  }
+</script>
+
+</body>
+</html>
